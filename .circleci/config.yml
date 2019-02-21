@@ -57,6 +57,7 @@ jobs:
       - run:
           name: check style
           command: |
-            git ls-files | grep *.py | xargs black --check
+            . venv/bin/activate
+            git ls-files | grep ".py" | xargs black --check
 
 
