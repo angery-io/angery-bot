@@ -26,11 +26,12 @@ except KeyError:
 
 
 def lambda_handler(event, context):
-    if "challenge" in event:
-        return
+    body = json.loads(event["body"])
+    if "challenge" in body:
+        return {"body": body["challenge"]}
 
     else:
-        event = event.get("event", {})
+        event = body.get("event", {})
         channel = event.get("channel", "")
         text = event.get("text", "").lower()
         item = event.get("item", {})
@@ -52,3 +53,4 @@ def lambda_handler(event, context):
                 % img
             ).encode()
             urlopen(HOOK, data=payload)
+        return {}
