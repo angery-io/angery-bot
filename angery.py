@@ -4,10 +4,14 @@ import sys
 import json
 from random import choice
 from urllib.request import urlopen, Request
+import hmac
+import hashlib
+from time import time
 
 
 SLACK_POSTMESSAGE_API = "https://slack.com/api/chat.postMessage"
-
+SLACK_TIMESTAMP = "X-Slack-Request-Timestamp"
+SLACK_SIGNATURE = "X-Slack-Signature"
 
 ANGERY_SUPPRESSOR = ("no_react", "noreact", "nobot", "no_bot")
 ANGERY_TRIGGER = (
@@ -28,7 +32,30 @@ except KeyError:
     raise RuntimeError("SLACK_TOKEN environment variable is not set.")
 
 
+def verify_request_comes_from_slack(event):
+    try:
+        SIGNING_SECRET = os.environ["SLACK_SIGNING_SECRET"].encode()
+    except KeyError:
+        raise RuntimeError("SLACK_SIGNING_SECRET environment variable is not set.")
+        
+    headers = event.get('headers', {})
+    if SLACK_TIMESTAMP not in headers or SLACK_SIGNATURE not in headers:
+        raise RuntimeError('Missing Slack verification headers')
+    
+    timestamp = headers[SLACK_TIMESTAMP]
+    if time() - int(timestamp) > 60:
+        raise RuntimeError('Slack message too old - possible replay')
+    
+    raw_body = event['body']
+    signature_base = f'v0:{timestamp}:{raw_body}'.encode()
+    signature = 'v0=' + hmac.new(SIGNING_SECRET, signature_base, hashlib.sha256).hexdigest()
+    if signature != headers[SLACK_SIGNATURE]:
+        raise RuntimeError('Slack signature not matching')
+
+
 def lambda_handler(event, context):
+    verify_request_comes_from_slack(event)
+    
     body = json.loads(event["body"])
     if "challenge" in body:
         return {"body": body["challenge"]}
@@ -53,7 +80,10 @@ def lambda_handler(event, context):
 
             payload = {
                 "channel": channel,
-                "attachments": [{"image_url": img, "fallback": "Angery react"}],
+                "attachments": [{
+                    "image_url": img,
+                    "fallback": "Angery react",
+                }],
             }
             encoded = json.dumps(payload).encode()
             request = Request(
@@ -61,9 +91,7 @@ def lambda_handler(event, context):
                 data=encoded,
                 headers={
                     "Content-type": "application/json",
-                    "Authorization": f"Bearer {TOKEN}",
-                },
-                method="POST",
-            )
+                    "Authorization": f"Bearer {TOKEN}" },
+                method="POST")
             urlopen(request)
         return {}
