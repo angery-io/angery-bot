@@ -3,7 +3,10 @@ import os
 import sys
 import json
 from random import choice
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
+
+
+SLACK_POSTMESSAGE_API = "https://slack.com/api/chat.postMessage"
 
 
 ANGERY_SUPPRESSOR = ("no_react", "noreact", "nobot", "no_bot")
@@ -20,9 +23,9 @@ ANGERY_RESOURCES = os.path.join("resources", "angery.txt")
 
 
 try:
-    HOOK = os.environ["SLACK_HOOK"]
+    TOKEN = os.environ["SLACK_TOKEN"]
 except KeyError:
-    raise RuntimeError("SLACK_HOOK environment variable is not set.")
+    raise RuntimeError("SLACK_TOKEN environment variable is not set.")
 
 
 def lambda_handler(event, context):
@@ -48,9 +51,19 @@ def lambda_handler(event, context):
                 imgs = f.readlines()
             img = choice(imgs)[:-1]
 
-            payload = (
-                '{"attachments": [{"image_url": "%s","fallback": "Angery react"}],"username":"ANGERY Bot","icon_emoji":":angery:","channel":"#general"}'
-                % img
-            ).encode()
-            urlopen(HOOK, data=payload)
+            payload = {
+                "channel": channel,
+                "attachments": [{"image_url": img, "fallback": "Angery react"}],
+            }
+            encoded = json.dumps(payload).encode()
+            request = Request(
+                SLACK_POSTMESSAGE_API,
+                data=encoded,
+                headers={
+                    "Content-type": "application/json",
+                    "Authorization": f"Bearer {TOKEN}",
+                },
+                method="POST",
+            )
+            urlopen(request)
         return {}
