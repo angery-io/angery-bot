@@ -99,7 +99,6 @@ def register(params):
 
 
 def lambda_handler(event, context):
-    print(event)
     if event.get("resource") == "/AngeryBot/register":
         register(event.get("queryStringParameters", {}))
         return {
@@ -109,7 +108,6 @@ def lambda_handler(event, context):
     verify_request_comes_from_slack(event)
 
     body = json.loads(event["body"])
-    print(body)
 
     if "challenge" in body:
         return {"body": body["challenge"]}
@@ -149,6 +147,5 @@ def lambda_handler(event, context):
                 },
                 method="POST",
             )
-            print(encoded)
             urlopen(request)
         return {}
