@@ -66,7 +66,7 @@ def put_attributes(sdb, domain, team_id, token=None, reacts=True, **kwargs):
         {"Name": name, "Value": value, "Replace": True}
         for name, value in (
             ([("token", token)] if token else [])
-            + ([("reacts", str(reacts))] if reacts else [])
+            + [("reacts", str(reacts))]
             + list(kwargs.items())
         )
     ]
@@ -76,9 +76,7 @@ def put_attributes(sdb, domain, team_id, token=None, reacts=True, **kwargs):
 
 
 def get_attributes(sdb, domain, team_id):
-    response = sdb.get_attributes(
-        DomainName=domain, ItemName=team_id, ConsistentRead=True
-    )
+    response = sdb.get_attributes(DomainName=domain, ItemName=team_id)
     return {attr["Name"]: attr["Value"] for attr in response.get("Attributes", [])}
 
 
@@ -88,6 +86,9 @@ def register(params):
         CLIENT_SECRET = os.environ["CLIENT_SECRET"]
     except KeyError:
         raise RuntimeError("Slack client id or secret environment variable is not set.")
+
+    if "error" in params:
+        return
 
     code = params.get("code")
     if not code:
@@ -145,7 +146,6 @@ def slash_command(body):
 
 def handle_message(body):
     if "challenge" in body:
-        print(event, context)
         return {"body": body["challenge"]}
 
     else:
@@ -189,6 +189,7 @@ def handle_message(body):
                 method="POST",
             )
             urlopen(request)
+    return {}
 
 
 def lambda_handler(event, context):
@@ -223,5 +224,5 @@ def lambda_handler(event, context):
     if body.get("event", {}).get("type") == "app_uninstalled":
         get_sdb().delete_attributes(DomainName=SDB_DOMAIN, ItemName=body["team_id"])
     else:
-        handle_message(body)
+        return handle_message(body)
     return {}
