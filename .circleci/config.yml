@@ -21,18 +21,18 @@ jobs:
       - checkout
 
       # Download and cache dependencies
-      # - restore_cache:
-      #     keys:
-      #       - v1-dependencies-{{ checksum "requirements.txt" }}
-      #       # fallback to using the latest cache if no exact match is found
-      #       - v1-dependencies-
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "requirements.txt" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
 
       - run:
           name: install dependencies
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            pip install black
+            pip install -r requirements.txt
 
       # - save_cache:
       #     paths:
@@ -50,10 +50,6 @@ jobs:
       #       . venv/bin/activate
       #       python manage.py test
 
-      # - store_artifacts:
-      #     path: test-reports
-      #     destination: test-reports
-      #
       - run:
           name: check style
           command: |
@@ -61,3 +57,13 @@ jobs:
             git ls-files | grep ".py" | xargs black --check
 
 
+      - run:
+          name: run tests
+          command: |
+            . venv/bin/activate
+            pytest tests
+
+      - save_cache:
+          key: v1-dependencies-{{ checksum "requirements.txt" }}
+          paths:
+            - "venv"
