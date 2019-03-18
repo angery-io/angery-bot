@@ -1,17 +1,33 @@
+#!/usr/bin/env runhaskell
+import System.Environment
+import System.IO
+
+outputFilename = "angery.html"
+
 main :: IO ()
-main = interact $ make_html . unlines . make_blocks . map make_img . lines
+main = do
+  args <- getArgs
+  inHandle <- case args of
+    [] -> return stdin
+    ["-"] -> return stdin
+    [filename] -> openFile filename ReadMode
+    _ -> error "Invalid argument"
+  content <- hGetContents inHandle
+  outHandle <- openFile outputFilename WriteMode
+  let processData = makeHtml . unlines . makeBlocks . map makeImg . lines in
+    hPutStr outHandle (processData content)
 
-make_img :: String -> String
-make_img url = concat ["<div style=\"width:280px\"><img src=\"", url, "\" /><br>", id, "</div>"]
-  where id = fst $ break (== '.') $ reverse $ fst $ break (== '/') $ reverse url
+makeImg :: String -> String
+makeImg url = concat ["<div style=\"width:280px\"><img src=\"", url, "\" /><br>", id, "</div>"]
+  where id = takeWhile (/= '.') $ reverse $ takeWhile (/= '/') $ reverse url
 
-make_blocks :: [String] -> [String]
-make_blocks [] = []
-make_blocks lns =  "<div id=\"block\">" : left ++ "</div>" : make_blocks right
+makeBlocks :: [String] -> [String]
+makeBlocks [] = []
+makeBlocks lns =  "<div id=\"block\">" : left ++ "</div>" : makeBlocks right
   where (left, right) = splitAt 5 lns
 
-make_html :: String -> String
-make_html body = concat [
+makeHtml :: String -> String
+makeHtml body = concat [
   "<style>#block { display: flex; justify-content: center; }</style>",
   body,
   "<script type=\"text/javascript\">setTimeout(() => {",
