@@ -1,5 +1,6 @@
 import os
 import telegram
+import json
 from random import choice
 
 try:
@@ -23,7 +24,7 @@ BOT = telegram.Bot(token=TOKEN)
 
 
 def lambda_handler(event, context):
-    body = event["body"]
+    body = json.loads(event["body"])
     update = telegram.Update.de_json(body, BOT)
     search_space = update.message.text
     if not (
