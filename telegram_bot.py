@@ -1,5 +1,5 @@
 import os
-from telegram.ext import Updater, MessageHandler, Filters
+import telegram
 from random import choice
 
 try:
@@ -19,29 +19,21 @@ ANGERY_TRIGGER = (
     "aggravating",
 )
 ANGERY_RESOURCES = os.path.join("resources", "angery.txt")
+BOT = telegram.Bot(token=TOKEN)
 
 
-def handle_msg(bot, update):
+def lambda_handler(event, context):
+    body = event["body"]
+    update = telegram.Update.de_json(body, BOT)
     search_space = update.message.text
     if not (
         search_space
         and not any(suppressor in search_space for suppressor in ANGERY_SUPPRESSOR)
         and any(trigger in search_space for trigger in ANGERY_TRIGGER)
     ):
-        return
+        return {}
     with open(ANGERY_RESOURCES, "r") as f:
         imgs = f.readlines()
     img = choice(imgs)[:-1]
     update.message.reply_photo(img)
-
-
-def main():
-    updater = Updater(token=TOKEN)
-    dp = updater.dispatcher
-    dp.add_handler(MessageHandler(Filters.text, handle_msg))
-    updater.start_polling()
-    updater.idle()
-
-
-if __name__ == "__main__":
-    main()
+    return {}
