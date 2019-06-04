@@ -26,7 +26,7 @@ BOT = telegram.Bot(token=TOKEN)
 def lambda_handler(event, context):
     body = json.loads(event["body"])
     update = telegram.Update.de_json(body, BOT)
-    search_space = update.message.text
+    search_space = update.message.text.lower()
     if not (
         search_space
         and not any(suppressor in search_space for suppressor in ANGERY_SUPPRESSOR)
