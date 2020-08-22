@@ -37,4 +37,13 @@ def lambda_handler(event, context):
         imgs = f.readlines()
     img = choice(imgs)[:-1]
     update.message.reply_photo(img)
+    write_angery_metric()
     return {}
+
+
+def write_angery_metric():
+    cloudwatch = boto3.client('cloudwatch')
+    response = cloudwatch.put_metric_data(
+        Namespace='AngeryBot',
+        MetricData=[{"MetricName": "AngeryServed", "Unit": "Count", "Value": 1},],
+    )
