@@ -163,7 +163,7 @@ def handle_message(body):
         and any(trigger in search_space for trigger in ANGERY_TRIGGER)
     ):
         return {}
-        
+
     with open(ANGERY_RESOURCES, "r") as f:
         imgs = f.readlines()
     img = choice(imgs)[:-1]
@@ -195,10 +195,10 @@ def handle_message(body):
 
 
 def write_angery_metric():
-    cloudwatch = boto3.client('cloudwatch')
+    cloudwatch = boto3.client("cloudwatch")
     response = cloudwatch.put_metric_data(
-        Namespace='AngeryBot',
-        MetricData=[{"MetricName": "AngeryServed", "Unit": "Count", "Value": 1},],
+        Namespace="AngeryBot",
+        MetricData=[{"MetricName": "AngeryServed", "Unit": "Count", "Value": 1}],
     )
 
 
