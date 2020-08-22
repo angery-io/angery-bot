@@ -190,7 +190,16 @@ def handle_message(body):
         method="POST",
     )
     urlopen(request)
+    write_angery_metric()
     return {}
+
+
+def write_angery_metric():
+    cloudwatch = boto3.client('cloudwatch')
+    response = cloudwatch.put_metric_data(
+        Namespace='AngeryBot',
+        MetricData=[{"MetricName": "AngeryServed", "Unit": "Count", "Value": 1},],
+    )
 
 
 def lambda_handler(event, context):
