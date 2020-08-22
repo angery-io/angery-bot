@@ -148,47 +148,48 @@ def handle_message(body):
     if "challenge" in body:
         return {"body": body["challenge"]}
 
-    else:
-        team_id = body.get("team_id")
-        event = body.get("event", {})
-        channel = event.get("channel", "")
-        text = event.get("text", "").lower()
-        item = event.get("item", {})
-        reaction = event.get("reaction", "")
-        channel = channel or item.get("channel", "")
-        search_space = text + reaction
+    team_id = body.get("team_id")
+    event = body.get("event", {})
+    channel = event.get("channel", "")
+    text = event.get("text", "").lower()
+    item = event.get("item", {})
+    reaction = event.get("reaction", "")
+    channel = channel or item.get("channel", "")
+    search_space = text + reaction
 
-        if (
-            search_space
-            and not any(suppressor in search_space for suppressor in ANGERY_SUPPRESSOR)
-            and any(trigger in search_space for trigger in ANGERY_TRIGGER)
-        ):
-            with open(ANGERY_RESOURCES, "r") as f:
-                imgs = f.readlines()
-            img = choice(imgs)[:-1]
+    if not (
+        search_space
+        and not any(suppressor in search_space for suppressor in ANGERY_SUPPRESSOR)
+        and any(trigger in search_space for trigger in ANGERY_TRIGGER)
+    ):
+        return {}
+        
+    with open(ANGERY_RESOURCES, "r") as f:
+        imgs = f.readlines()
+    img = choice(imgs)[:-1]
 
-            sdb = get_sdb()
-            attributes = get_attributes(sdb, SDB_DOMAIN, team_id)
-            token = attributes.get("token")
-            if not token:
-                raise RuntimeError(f"No token for team_id: {team_id}")
-            if reaction and attributes.get("reacts", "True") != "True":
-                return {}
-            payload = {
-                "channel": channel,
-                "attachments": [{"image_url": img, "fallback": "Angery react"}],
-            }
-            encoded = json.dumps(payload).encode()
-            request = Request(
-                SLACK_POSTMESSAGE_API,
-                data=encoded,
-                headers={
-                    "Content-type": "application/json",
-                    "Authorization": f"Bearer {token}",
-                },
-                method="POST",
-            )
-            urlopen(request)
+    sdb = get_sdb()
+    attributes = get_attributes(sdb, SDB_DOMAIN, team_id)
+    token = attributes.get("token")
+    if not token:
+        raise RuntimeError(f"No token for team_id: {team_id}")
+    if reaction and attributes.get("reacts", "True") != "True":
+        return {}
+    payload = {
+        "channel": channel,
+        "attachments": [{"image_url": img, "fallback": "Angery react"}],
+    }
+    encoded = json.dumps(payload).encode()
+    request = Request(
+        SLACK_POSTMESSAGE_API,
+        data=encoded,
+        headers={
+            "Content-type": "application/json",
+            "Authorization": f"Bearer {token}",
+        },
+        method="POST",
+    )
+    urlopen(request)
     return {}
 
 
