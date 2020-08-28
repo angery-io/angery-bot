@@ -26,6 +26,8 @@ BOT = telegram.Bot(token=TOKEN)
 def lambda_handler(event, context):
     body = json.loads(event["body"])
     update = telegram.Update.de_json(body, BOT)
+    if not update or not update.message or not update.message.text:
+        return {}
     search_space = update.message.text.lower()
     if not (
         search_space
