@@ -17,7 +17,8 @@ SLACK_USER_API = "https://slack.com/api/users.info?"
 SLACK_TIMESTAMP = "X-Slack-Request-Timestamp"
 SLACK_SIGNATURE = "X-Slack-Signature"
 
-ANGERY_SUPPRESSOR = ("no_react", "noreact", "nobot", "no_bot")
+NOT_ANGERY = ["arranger", "danger", "hanger", "manger", "ranger", "tangerine"]
+ANGERY_SUPPRESSOR = ["no_react", "noreact", "nobot", "no_bot"] + NOT_ANGERY
 ANGERY_TRIGGER = (
     "angery",
     "angry",
