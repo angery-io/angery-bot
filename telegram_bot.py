@@ -1,4 +1,5 @@
 import os
+import boto3
 import telegram
 import json
 from random import choice
